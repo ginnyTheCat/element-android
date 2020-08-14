@@ -220,6 +220,12 @@
         <activity android:name=".features.widgets.WidgetActivity" />
         <activity android:name=".features.pin.PinActivity" />
 
+        <activity android:name="im.vector.app.features.bubbles.BubbleActivity"
+            android:allowEmbedded="true"
+            android:documentLaunchMode="always"
+            android:resizeableActivity="true" />
+
+
         <!-- Services -->
 
         <service
