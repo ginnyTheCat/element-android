@@ -45,12 +45,14 @@ import im.vector.app.core.utils.startNotificationChannelSettingsIntent
 import im.vector.app.features.call.VectorCallActivity
 import im.vector.app.features.call.service.CallHeadsUpActionReceiver
 import im.vector.app.features.home.HomeActivity
+import im.vector.app.features.home.ShortcutsHandler
 import im.vector.app.features.home.room.detail.RoomDetailActivity
 import im.vector.app.features.home.room.detail.RoomDetailArgs
 import im.vector.app.features.pin.PinLocker
 import im.vector.app.features.settings.VectorPreferences
 import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.random.Random
 
@@ -60,6 +62,7 @@ import kotlin.random.Random
  */
 @Singleton
 class NotificationUtils @Inject constructor(private val context: Context,
+                                            private val shortcutsHandler: Provider<ShortcutsHandler>,
                                             private val stringProvider: StringProvider,
                                             private val pinLocker: PinLocker,
                                             private val vectorPreferences: VectorPreferences) {
@@ -512,6 +515,8 @@ class NotificationUtils @Inject constructor(private val context: Context,
                                       lastMessageTimestamp: Long,
                                       senderDisplayNameForReplyCompat: String?,
                                       tickerText: String): Notification {
+        shortcutsHandler.get().observeRoomsAndBuildShortcuts(roomInfo)
+
         val accentColor = ContextCompat.getColor(context, R.color.notification_accent_color)
         // Build the pending intent for when the notification is clicked
         val openRoomIntent = buildOpenRoomIntent(roomInfo.roomId)
@@ -527,6 +532,8 @@ class NotificationUtils @Inject constructor(private val context: Context,
                 // For example, alarm notifications should display before promo notifications, or message from known contact
                 // that can be displayed in not disturb mode if white listed (the later will need compat28.x)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+
+                .setShortcutId(roomInfo.roomId)
 
                 // Title for API < 16 devices.
                 .setContentTitle(roomInfo.roomDisplayName)

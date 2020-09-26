@@ -17,6 +17,7 @@
 package im.vector.app.features.home
 
 import android.content.Context
+import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
 import android.os.Build
@@ -27,6 +28,7 @@ import androidx.core.graphics.drawable.IconCompat
 import im.vector.app.core.glide.GlideApp
 import im.vector.app.core.utils.DimensionConverter
 import im.vector.app.features.home.room.detail.RoomDetailActivity
+import im.vector.app.features.notifications.RoomEventGroupInfo
 import org.matrix.android.sdk.api.util.toMatrixItem
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -53,7 +55,7 @@ class ShortcutsHandler @Inject constructor(
         }
     }
 
-    fun observeRoomsAndBuildShortcuts(): Disposable {
+    fun observeRoomsAndBuildShortcuts(importantRoom: RoomEventGroupInfo? = null): Disposable {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) {
             // No op
             return Observable.empty<Unit>().subscribe()
@@ -65,7 +67,8 @@ class ShortcutsHandler @Inject constructor(
                 .observeOn(Schedulers.computation())
                 .subscribe { rooms ->
                     val shortcuts = rooms
-                            .filter { room -> room.isFavorite }
+                            .filter { room -> room.isFavorite || room.roomId == importantRoom?.roomId }
+                            .sortedByDescending { room -> room.roomId == importantRoom?.roomId }
                             .take(n = 4) // Android only allows us to create 4 shortcuts
                             .map { room ->
                                 val intent = RoomDetailActivity.shortcutIntent(context, room.roomId)
@@ -78,6 +81,8 @@ class ShortcutsHandler @Inject constructor(
                                         .setShortLabel(room.displayName)
                                         .setIcon(bitmap?.toProfileImageIcon())
                                         .setIntent(intent)
+                                        .setLongLived(true)
+                                        .setCategories(setOf(ShortcutInfo.SHORTCUT_CATEGORY_CONVERSATION))
                                         .build()
                             }
 
